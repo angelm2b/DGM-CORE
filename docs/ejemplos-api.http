@@ -1,0 +1,152 @@
+### Colección de ejemplos — API interna del CORE (/core/v1)
+### Compatible con la extensión "REST Client" (VS Code) o el HTTP Client de IntelliJ.
+### Define el token del integrador (storage/integrador_token.txt).
+
+@base = http://localhost:8000/core/v1
+@token = PEGA_AQUI_EL_TOKEN_DEL_INTEGRADOR
+
+### Catálogos
+GET {{base}}/catalogos/servicios
+Authorization: Bearer {{token}}
+
+###
+GET {{base}}/catalogos/categorias
+Authorization: Bearer {{token}}
+
+###
+GET {{base}}/catalogos/tarifas
+Authorization: Bearer {{token}}
+
+###
+GET {{base}}/catalogos/puntos-control
+Authorization: Bearer {{token}}
+
+### 1) Crear persona
+# @name crearPersona
+POST {{base}}/personas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "tipo_documento": "PASAPORTE",
+  "numero_documento": "A1234567",
+  "nacionalidad": "USA",
+  "nombres": "Jane",
+  "apellidos": "Doe",
+  "fecha_nacimiento": "1992-03-04",
+  "pasaporte_vence": "2030-01-01"
+}
+
+### Consultar persona por documento
+GET {{base}}/personas?documento=A1234567&tipo=PASAPORTE&nacionalidad=USA
+Authorization: Bearer {{token}}
+
+### Consultar persona por id
+GET {{base}}/personas/{{crearPersona.response.body.data.id}}
+Authorization: Bearer {{token}}
+
+### 2) Crear solicitud RT-9 (usa el id de la persona creada)
+# @name crearSolicitud
+POST {{base}}/solicitudes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "persona_id": "{{crearPersona.response.body.data.id}}",
+  "servicio_id": 1,
+  "oficina_id": 1,
+  "canal_origen": "WEB"
+}
+
+### 3) Transiciones hasta APROBADA_PAGO_PENDIENTE (genera la orden de pago)
+POST {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}/transicion
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "estado_destino": "ENVIADA" }
+
+###
+POST {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}/transicion
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "estado_destino": "EN_DEPURACION" }
+
+###
+POST {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}/transicion
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "estado_destino": "APROBADA_PAGO_PENDIENTE" }
+
+### 4) Ver la solicitud (incluye órdenes de pago)
+# @name verSolicitud
+GET {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}
+Authorization: Bearer {{token}}
+
+### Ver la orden de pago (incluye pagos registrados)
+GET {{base}}/ordenes-pago/{{verSolicitud.response.body.data.ordenes_pago.0.id}}
+Authorization: Bearer {{token}}
+
+### 5) Registrar pago (idempotente por Idempotency-Key)
+POST {{base}}/pagos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Idempotency-Key: idem-001
+
+{
+  "orden_pago_id": "{{verSolicitud.response.body.data.ordenes_pago.0.id}}",
+  "monto": "9500.00",
+  "metodo": "EFECTIVO"
+}
+
+### 6) Cargar adjunto (RN-11: solo JPG)
+POST {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}/adjuntos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "tipo_documento": "POLIZA", "formato": "JPG", "ruta": "adjuntos/poliza.jpg" }
+
+### 7) Emitir documento
+POST {{base}}/documentos/emitir
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "solicitud_id": "{{crearSolicitud.response.body.data.id}}", "tipo": "CARNET_RT9" }
+
+### Verificar documento por número de serie
+GET {{base}}/documentos/DOC-2026-000001/verificar
+Authorization: Bearer {{token}}
+
+### 8) Movimiento de entrada (30 días autorizados)
+POST {{base}}/movimientos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "persona_id": "{{crearPersona.response.body.data.id}}",
+  "tipo": "E",
+  "punto_control_id": 1,
+  "fecha_hora": "2026-01-01T10:00:00Z",
+  "dias_autorizados": 30
+}
+
+### Movimiento de salida (calcula la sobreestadía y la devuelve en la respuesta)
+POST {{base}}/movimientos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "persona_id": "{{crearPersona.response.body.data.id}}",
+  "tipo": "S",
+  "punto_control_id": 1,
+  "fecha_hora": "2026-02-20T10:00:00Z"
+}
+
+### Historial de movimientos de la persona
+GET {{base}}/movimientos?persona_id={{crearPersona.response.body.data.id}}
+Authorization: Bearer {{token}}
+
+### Tasa de estadía
+GET {{base}}/calculos/tasa-estadia?persona_id={{crearPersona.response.body.data.id}}&fecha_salida=2026-02-20
+Authorization: Bearer {{token}}

@@ -1,0 +1,44 @@
+# ----- Dependencias (regenerables) -----
+/vendor
+/node_modules
+
+# ----- Entorno / secretos -----
+.env
+.env.*
+!.env.example
+auth.json
+/storage/*.key
+/storage/integrador_token.txt
+/api.json
+Homestead.json
+Homestead.yaml
+
+# ----- Build / assets compilados -----
+/public/build
+/public/hot
+/public/storage
+/public/fonts-manifest.dev.json
+
+# ----- Logs y cachés -----
+*.log
+/.phpunit.cache
+.phpunit.result.cache
+/storage/pail
+
+# ----- Herramientas / IDE -----
+/.idea
+/.vscode
+/.zed
+/.nova
+/.cursor/
+/.codex
+/.fleet
+.phpactor.json
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# ----- Sistema operativo -----
+.DS_Store
+**/.DS_Store
+Thumbs.db

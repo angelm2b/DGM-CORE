@@ -1,0 +1,43 @@
+# ==========================================================================
+# .htaccess raíz — DGM-CORE (Laravel 13)
+# Para cuando el Document Root NO apunta a /public (Hostinger / compartido).
+# Lo ideal sigue siendo apuntar el Document Root a la carpeta /public.
+# ==========================================================================
+
+# --- No listar directorios ---
+Options -Indexes
+
+# --- Bloquear archivos sensibles (clave para que no se vea el .env) ---
+<FilesMatch "(^\.env|\.env\..*|^\.git.*|composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml|\.editorconfig|\.gitattributes|\.gitignore|README\.md)$">
+    Require all denied
+</FilesMatch>
+
+# --- Bloquear carpetas internas de Laravel ---
+RedirectMatch 403 ^/(app|bootstrap|config|database|resources|routes|storage|tests|vendor)(/.*)?$
+
+# Bloquear la carpeta física /docs (ejemplos, .http, etc.) PERO permitir la
+# documentación web de Scramble que vive en /docs/api y /docs/api.json
+RedirectMatch 403 ^/docs/(?!api(\.json)?($|/)).*$
+
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews
+    </IfModule>
+
+    RewriteEngine On
+
+    # Pasar el header Authorization (tokens / API / Sanctum)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Si ya viene hacia /public, no reescribir de nuevo
+    RewriteCond %{REQUEST_URI} !^/public/
+
+    # Servir archivos/carpetas reales que estén dentro de public/
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/public%{REQUEST_URI} -d
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # Todo lo demás -> front controller de Laravel
+    RewriteRule ^(.*)$ public/index.php [L]
+</IfModule>
