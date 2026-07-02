@@ -157,6 +157,45 @@ class ApiFlujoTest extends TestCase
         ])->assertStatus(422)->assertHeader('content-type', 'application/problem+json');
     }
 
+    public function test_actualizar_y_eliminar_persona(): void
+    {
+        $persona = $this->postJson('/core/v1/personas', [
+            'tipo_documento' => 'PASAPORTE', 'numero_documento' => 'D5555', 'nacionalidad' => 'MEX',
+            'nombres' => 'Ana', 'apellidos' => 'Luna', 'fecha_nacimiento' => '1995-05-05',
+        ])->assertStatus(201)->json('data');
+
+        // Actualización parcial: solo cambian los campos enviados.
+        $this->putJson("/core/v1/personas/{$persona['id']}", [
+            'email' => 'ana.luna@example.com',
+            'telefono' => '809-555-0101',
+        ])->assertOk()
+            ->assertJsonPath('data.email', 'ana.luna@example.com')
+            ->assertJsonPath('data.nombres', 'Ana');
+
+        // Eliminación de persona sin expedientes ni movimientos.
+        $this->deleteJson("/core/v1/personas/{$persona['id']}")->assertNoContent();
+        $this->getJson("/core/v1/personas/{$persona['id']}")->assertStatus(404);
+    }
+
+    public function test_eliminar_persona_con_expediente_es_rechazado(): void
+    {
+        $persona = $this->postJson('/core/v1/personas', [
+            'tipo_documento' => 'PASAPORTE', 'numero_documento' => 'E6666', 'nacionalidad' => 'COL',
+            'nombres' => 'Luis', 'apellidos' => 'Paz', 'fecha_nacimiento' => '1988-08-08',
+        ])->json('data');
+
+        // Crear una solicitud abre un expediente asociado a la persona.
+        $srv = Servicio::where('codigo', 'SRV-001')->first();
+        $this->postJson('/core/v1/solicitudes', [
+            'persona_id' => $persona['id'], 'servicio_id' => $srv->id,
+            'oficina_id' => $this->oficinaId, 'canal_origen' => 'WEB',
+        ])->assertStatus(201);
+
+        $this->deleteJson("/core/v1/personas/{$persona['id']}")
+            ->assertStatus(422)
+            ->assertHeader('content-type', 'application/problem+json');
+    }
+
     public function test_catalogos_responden(): void
     {
         $this->getJson('/core/v1/catalogos/servicios')->assertOk()->assertJsonStructure(['data']);

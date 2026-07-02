@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ReglaNegocioException;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ActualizarPersonaRequest;
 use App\Http\Requests\CrearPersonaRequest;
 use App\Http\Resources\PersonaResource;
 use App\Models\Persona;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class PersonaController extends Controller
 {
@@ -24,6 +27,28 @@ class PersonaController extends Controller
     public function show(Persona $persona): PersonaResource
     {
         return PersonaResource::make($persona->load('categoriaMigratoria'));
+    }
+
+    /** Actualiza los datos de una persona (actualización parcial). */
+    public function update(ActualizarPersonaRequest $request, Persona $persona): PersonaResource
+    {
+        $persona->update($request->validated());
+
+        return PersonaResource::make($persona->load('categoriaMigratoria'));
+    }
+
+    /** Elimina una persona sin expedientes ni movimientos asociados. */
+    public function destroy(Persona $persona): Response
+    {
+        if ($persona->expedientes()->exists() || $persona->movimientos()->exists()) {
+            throw new ReglaNegocioException(
+                'No se puede eliminar la persona: tiene expedientes o movimientos migratorios asociados.'
+            );
+        }
+
+        $persona->delete();
+
+        return response()->noContent();
     }
 
     /** Búsqueda por documento (?documento=&tipo=&nacionalidad=). */

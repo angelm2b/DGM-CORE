@@ -19,6 +19,8 @@ class UsuariosRolesSeeder extends Seeder
         $permisos = [
             'personas.crear' => 'Crear personas',
             'personas.ver' => 'Consultar personas',
+            'personas.actualizar' => 'Actualizar personas',
+            'personas.eliminar' => 'Eliminar personas',
             'solicitudes.crear' => 'Crear solicitudes',
             'solicitudes.ver' => 'Consultar solicitudes',
             'solicitudes.transicionar' => 'Transicionar solicitudes',
@@ -44,7 +46,8 @@ class UsuariosRolesSeeder extends Seeder
         $roles = [
             'ADMIN_DGM' => ['nombre' => 'Administrador DGM', 'permisos' => $todos->keys()],
             'ANALISTA_EXTRANJERIA' => ['nombre' => 'Analista de Extranjería', 'permisos' => collect([
-                'personas.crear', 'personas.ver', 'solicitudes.crear', 'solicitudes.ver',
+                'personas.crear', 'personas.ver', 'personas.actualizar',
+                'solicitudes.crear', 'solicitudes.ver',
                 'solicitudes.transicionar', 'adjuntos.cargar', 'ordenes.ver',
                 'documentos.emitir', 'documentos.verificar', 'calculos.ver', 'catalogos.ver',
             ])],

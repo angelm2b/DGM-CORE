@@ -45,6 +45,21 @@ Authorization: Bearer {{token}}
 GET {{base}}/personas/{{crearPersona.response.body.data.id}}
 Authorization: Bearer {{token}}
 
+### Actualizar persona (actualización parcial: solo los campos enviados)
+PUT {{base}}/personas/{{crearPersona.response.body.data.id}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "email": "jane.doe@example.com",
+  "telefono": "809-555-0101",
+  "pasaporte_vence": "2032-01-01"
+}
+
+### Eliminar persona (solo si no tiene expedientes ni movimientos; responde 204)
+DELETE {{base}}/personas/{{crearPersona.response.body.data.id}}
+Authorization: Bearer {{token}}
+
 ### 2) Crear solicitud RT-9 (usa el id de la persona creada)
 # @name crearSolicitud
 POST {{base}}/solicitudes

@@ -25,6 +25,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/personas', [PersonaController::class, 'store'])->middleware('permiso:personas.crear');
     Route::get('/personas', [PersonaController::class, 'index'])->middleware('permiso:personas.ver');
     Route::get('/personas/{persona}', [PersonaController::class, 'show'])->middleware('permiso:personas.ver');
+    Route::put('/personas/{persona}', [PersonaController::class, 'update'])->middleware('permiso:personas.actualizar');
+    Route::delete('/personas/{persona}', [PersonaController::class, 'destroy'])->middleware('permiso:personas.eliminar');
 
     // Solicitudes
     Route::post('/solicitudes', [SolicitudController::class, 'store'])->middleware('permiso:solicitudes.crear');
