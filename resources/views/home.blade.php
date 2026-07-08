@@ -83,6 +83,7 @@
         <div class="links">
             <a class="btn" href="/docs/api">Documentación</a>
             <a class="btn secondary" href="/docs/api.json">API (OpenAPI JSON)</a>
+            <a class="btn secondary" href="/admin">Panel de administración</a>
         </div>
         @unless (app()->environment('local'))
             <a class="logout" href="/docs-acceso/salir">← Cerrar sesión</a>
