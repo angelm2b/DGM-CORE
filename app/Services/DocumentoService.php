@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\ReglaNegocioException;
 use App\Models\DocumentoEmitido;
 use App\Models\Solicitud;
 use Carbon\CarbonInterface;
@@ -52,6 +53,8 @@ class DocumentoService
     /** Revoca un documento vigente. */
     public function revocar(DocumentoEmitido $documento, ?string $motivo = null): DocumentoEmitido
     {
+        $this->exigirVigente($documento, 'revocar');
+
         $documento->update(['estado' => 'REVOCADO']);
 
         return $documento;
@@ -63,6 +66,8 @@ class DocumentoService
      */
     public function reponer(DocumentoEmitido $original): DocumentoEmitido
     {
+        $this->exigirVigente($original, 'reponer');
+
         return DB::transaction(function () use ($original) {
             $original->update(['estado' => 'REPUESTO']);
 
@@ -77,6 +82,16 @@ class DocumentoService
 
             return $nuevo;
         });
+    }
+
+    /** Solo un documento VIGENTE puede revocarse o reponerse. */
+    private function exigirVigente(DocumentoEmitido $documento, string $operacion): void
+    {
+        if ($documento->estado !== 'VIGENTE') {
+            throw new ReglaNegocioException(
+                "Solo se puede {$operacion} un documento VIGENTE; el documento {$documento->numero_serie} está {$documento->estado}."
+            );
+        }
     }
 
     /**

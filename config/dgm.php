@@ -33,6 +33,15 @@ return [
         'mayoria_edad' => 18,
     ],
 
+    // Códigos de servicio a los que aplican reglas de elegibilidad específicas
+    // (ver ElegibilidadService::evaluarSolicitud).
+    'elegibilidad' => [
+        // Renovaciones: RN-03 (antelación) y RN-08 (póliza validada).
+        'servicios_renovacion' => ['SRV-002', 'SRV-004'],
+        // Cambio de categoría RT-9 → RP-1: RN-05.
+        'servicio_cambio_categoria' => 'SRV-003',
+    ],
+
     // Moneda por defecto del sistema.
     'moneda' => 'DOP',
 ];

@@ -60,6 +60,14 @@ Content-Type: application/json
 DELETE {{base}}/personas/{{crearPersona.response.body.data.id}}
 Authorization: Bearer {{token}}
 
+### Expedientes de la persona
+GET {{base}}/personas/{{crearPersona.response.body.data.id}}/expedientes
+Authorization: Bearer {{token}}
+
+### Documentos emitidos a la persona
+GET {{base}}/personas/{{crearPersona.response.body.data.id}}/documentos
+Authorization: Bearer {{token}}
+
 ### 2) Crear solicitud RT-9 (usa el id de la persona creada)
 # @name crearSolicitud
 POST {{base}}/solicitudes
@@ -99,6 +107,18 @@ Content-Type: application/json
 GET {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}
 Authorization: Bearer {{token}}
 
+### Listar solicitudes por persona / expediente / estado
+GET {{base}}/solicitudes?persona_id={{crearPersona.response.body.data.id}}&estado=BORRADOR
+Authorization: Bearer {{token}}
+
+### Elegibilidad de la solicitud (evalúa RN-03/05/08/10 según el servicio)
+GET {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}/elegibilidad
+Authorization: Bearer {{token}}
+
+### Ver el expediente de la solicitud
+GET {{base}}/expedientes/{{crearSolicitud.response.body.data.expediente_id}}
+Authorization: Bearer {{token}}
+
 ### Ver la orden de pago (incluye pagos registrados)
 GET {{base}}/ordenes-pago/{{verSolicitud.response.body.data.ordenes_pago.0.id}}
 Authorization: Bearer {{token}}
@@ -115,14 +135,32 @@ Idempotency-Key: idem-001
   "metodo": "EFECTIVO"
 }
 
+### Consultar un pago registrado (reimpresión de comprobante)
+# Usa el id devuelto por el POST /pagos.
+GET {{base}}/pagos/PEGA_AQUI_EL_ID_DEL_PAGO
+Authorization: Bearer {{token}}
+
 ### 6) Cargar adjunto (RN-11: solo JPG)
+# @name cargarAdjunto
 POST {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}/adjuntos
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "tipo_documento": "POLIZA", "formato": "JPG", "ruta": "adjuntos/poliza.jpg" }
 
+### Validar el adjunto (RN-08: la renovación exige PÓLIZA validada)
+PUT {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}/adjuntos/{{cargarAdjunto.response.body.data.id}}/validar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "validado": true, "usuario_id": 2 }
+
+### Eliminar un adjunto cargado por error (validado no se puede; responde 204)
+DELETE {{base}}/solicitudes/{{crearSolicitud.response.body.data.id}}/adjuntos/{{cargarAdjunto.response.body.data.id}}
+Authorization: Bearer {{token}}
+
 ### 7) Emitir documento
+# @name emitirDocumento
 POST {{base}}/documentos/emitir
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -131,6 +169,14 @@ Content-Type: application/json
 
 ### Verificar documento por número de serie
 GET {{base}}/documentos/DOC-2026-000001/verificar
+Authorization: Bearer {{token}}
+
+### Revocar documento (queda REVOCADO y deja de verificar como válido)
+POST {{base}}/documentos/{{emitirDocumento.response.body.data.id}}/revocar
+Authorization: Bearer {{token}}
+
+### Reponer documento por pérdida/robo (el original queda REPUESTO; responde el nuevo)
+POST {{base}}/documentos/{{emitirDocumento.response.body.data.id}}/reponer
 Authorization: Bearer {{token}}
 
 ### 8) Movimiento de entrada (30 días autorizados)
@@ -164,4 +210,8 @@ Authorization: Bearer {{token}}
 
 ### Tasa de estadía
 GET {{base}}/calculos/tasa-estadia?persona_id={{crearPersona.response.body.data.id}}&fecha_salida=2026-02-20
+Authorization: Bearer {{token}}
+
+### Penalidad por residencia vencida (RN-04: RD$1,000 por mes o fracción)
+GET {{base}}/calculos/penalidad?fecha_vencimiento=2026-01-01&fecha_calculo=2026-03-15
 Authorization: Bearer {{token}}

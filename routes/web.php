@@ -58,6 +58,8 @@ Route::prefix('admin')->group(function () {
         Route::get('/tarifas', [CatalogoAdminController::class, 'tarifas']);
         Route::get('/tarifas/crear', [CatalogoAdminController::class, 'crearTarifa']);
         Route::post('/tarifas', [CatalogoAdminController::class, 'guardarTarifa']);
+        Route::get('/tarifas/{tarifa}/editar', [CatalogoAdminController::class, 'editarTarifa']);
+        Route::put('/tarifas/{tarifa}', [CatalogoAdminController::class, 'actualizarTarifa']);
 
         // Solicitudes (solo lectura)
         Route::get('/solicitudes', [SolicitudAdminController::class, 'index']);

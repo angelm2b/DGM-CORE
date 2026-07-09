@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\EmitirDocumentoRequest;
 use App\Http\Resources\DocumentoEmitidoResource;
 use App\Models\DocumentoEmitido;
+use App\Models\Persona;
 use App\Models\Solicitud;
 use App\Services\DocumentoService;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,34 @@ class DocumentoController extends Controller
         );
 
         return DocumentoEmitidoResource::make($documento)->response()->setStatusCode(201);
+    }
+
+    /** Revoca un documento vigente (queda REVOCADO y deja de verificar como válido). */
+    public function revocar(DocumentoEmitido $documento): DocumentoEmitidoResource
+    {
+        return DocumentoEmitidoResource::make($this->documentos->revocar($documento));
+    }
+
+    /**
+     * Repone un documento vigente (pérdida/robo/deterioro): el original queda
+     * REPUESTO y se emite uno nuevo con número de serie propio.
+     */
+    public function reponer(DocumentoEmitido $documento): JsonResponse
+    {
+        $nuevo = $this->documentos->reponer($documento);
+
+        return DocumentoEmitidoResource::make($nuevo)->response()->setStatusCode(201);
+    }
+
+    /** Documentos emitidos a una persona, del más reciente al más antiguo. */
+    public function porPersona(Persona $persona)
+    {
+        $documentos = DocumentoEmitido::query()
+            ->whereHas('solicitud.expediente', fn ($q) => $q->where('persona_id', $persona->id))
+            ->orderByDesc('fecha_emision')
+            ->get();
+
+        return DocumentoEmitidoResource::collection($documentos);
     }
 
     /** Verifica un documento por su número de serie. */

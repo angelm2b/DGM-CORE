@@ -32,6 +32,7 @@
                     <th>Vigente desde</th>
                     <th>Vigente hasta</th>
                     <th>Resolución</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -43,9 +44,10 @@
                         <td>{{ $tarifa->vigente_desde?->format('d/m/Y') }}</td>
                         <td>{{ $tarifa->vigente_hasta?->format('d/m/Y') ?? '—' }}</td>
                         <td>{{ $tarifa->resolucion ?? '—' }}</td>
+                        <td><a href="/admin/tarifas/{{ $tarifa->id }}/editar">Editar</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" style="color: var(--muted);">No hay tarifas para el filtro seleccionado.</td></tr>
+                    <tr><td colspan="7" style="color: var(--muted);">No hay tarifas para el filtro seleccionado.</td></tr>
                 @endforelse
             </tbody>
         </table>

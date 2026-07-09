@@ -19,6 +19,84 @@ use Illuminate\Support\Carbon;
 class ElegibilidadService
 {
     /**
+     * Evalúa las reglas de elegibilidad aplicables a una solicitud según su
+     * servicio, sin lanzar excepciones: devuelve el resultado de cada regla.
+     * RN-01 y RN-12 requieren datos que no viven en la solicitud (días
+     * solicitados, estado civil/solvencia), por lo que no se evalúan aquí.
+     *
+     * @return array{elegible:bool, requiere_certificacion_menor:bool, reglas:list<array{regla:string, descripcion:string, cumple:bool, detalle:?string}>}
+     */
+    public function evaluarSolicitud(Solicitud $solicitud): array
+    {
+        $solicitud->loadMissing(['servicio', 'expediente.persona.categoriaMigratoria']);
+
+        $persona = $solicitud->expediente->persona;
+        $codigoServicio = $solicitud->servicio?->codigo;
+        $fechaSolicitud = $solicitud->fecha_creacion;
+
+        $reglas = [
+            $this->evaluarRegla('RN-10', 'Pasaporte con vigencia mínima respecto a la fecha de solicitud',
+                fn () => $this->validarVigenciaPasaporte($persona, $fechaSolicitud)),
+        ];
+
+        if (in_array($codigoServicio, (array) config('dgm.elegibilidad.servicios_renovacion', []), true)) {
+            $reglas[] = $this->evaluarRegla('RN-03', 'Renovación solicitada con la antelación mínima al vencimiento',
+                fn () => $this->validarAntelacionRenovacion($this->vencimientoCarnetVigente($persona), $fechaSolicitud));
+            $reglas[] = $this->evaluarRegla('RN-08', 'Renovación con PÓLIZA adjunta y validada',
+                fn () => $this->validarPolizaRenovacion($solicitud));
+        }
+
+        if ($codigoServicio === config('dgm.elegibilidad.servicio_cambio_categoria')) {
+            $reglas[] = $this->evaluarRegla('RN-05', 'Cambio de categoría permitido (solo RT-9 a RP-1, con carnet RT-9)',
+                fn () => $this->validarCambioCategoria($persona, 'RP-1'));
+        }
+
+        return [
+            'elegible' => ! in_array(false, array_column($reglas, 'cumple'), true),
+            // RN-09: informativo, indica que aplica el flujo de salida de menores.
+            'requiere_certificacion_menor' => $this->requiereCertificacionMenor($persona),
+            'reglas' => $reglas,
+        ];
+    }
+
+    /**
+     * Ejecuta una validación y traduce su resultado a cumple/detalle.
+     *
+     * @return array{regla:string, descripcion:string, cumple:bool, detalle:?string}
+     */
+    private function evaluarRegla(string $regla, string $descripcion, callable $validacion): array
+    {
+        try {
+            $validacion();
+
+            return ['regla' => $regla, 'descripcion' => $descripcion, 'cumple' => true, 'detalle' => null];
+        } catch (ReglaNegocioException $e) {
+            return ['regla' => $regla, 'descripcion' => $descripcion, 'cumple' => false, 'detalle' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Vencimiento del carnet vigente (o repuesto) más reciente de la persona,
+     * base del cómputo de antelación de una renovación (RN-03).
+     */
+    private function vencimientoCarnetVigente(Persona $persona): CarbonInterface
+    {
+        $vencimiento = DocumentoEmitido::query()
+            ->whereHas('solicitud.expediente', fn ($q) => $q->where('persona_id', $persona->id))
+            ->where('tipo', 'like', 'CARNET_%')
+            ->whereIn('estado', ['VIGENTE', 'REPUESTO'])
+            ->whereNotNull('fecha_vencimiento')
+            ->orderByDesc('fecha_vencimiento')
+            ->value('fecha_vencimiento');
+
+        if (! $vencimiento) {
+            throw new ReglaNegocioException('La persona no tiene un carnet vigente del cual derivar el vencimiento a renovar.', 'RN-03');
+        }
+
+        return Carbon::parse($vencimiento);
+    }
+
+    /**
      * RN-01: la estadía total de un turista (base 30 días + prórrogas) no puede
      * superar los 120 días.
      */

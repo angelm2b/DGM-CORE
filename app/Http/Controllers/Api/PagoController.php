@@ -9,6 +9,7 @@ use App\Http\Requests\RegistrarPagoRequest;
 use App\Http\Resources\OrdenPagoResource;
 use App\Http\Resources\PagoResource;
 use App\Models\OrdenPago;
+use App\Models\Pago;
 use App\Services\PagoService;
 use Illuminate\Http\JsonResponse;
 
@@ -20,6 +21,12 @@ class PagoController extends Controller
     public function show(OrdenPago $ordenPago): OrdenPagoResource
     {
         return OrdenPagoResource::make($ordenPago->load('pagos'));
+    }
+
+    /** Consulta un pago registrado (p. ej. para reimprimir el comprobante). */
+    public function showPago(Pago $pago): PagoResource
+    {
+        return PagoResource::make($pago);
     }
 
     /**

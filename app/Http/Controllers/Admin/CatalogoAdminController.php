@@ -69,7 +69,32 @@ class CatalogoAdminController extends Controller
 
     public function guardarTarifa(Request $request): RedirectResponse
     {
-        $datos = $request->validate([
+        Tarifa::create($this->validarTarifa($request));
+
+        return redirect('/admin/tarifas')->with('exito', 'Tarifa registrada correctamente.');
+    }
+
+    public function editarTarifa(Tarifa $tarifa)
+    {
+        return View::make('admin.tarifas.editar', [
+            'tarifa' => $tarifa,
+            'servicios' => Servicio::orderBy('codigo')->get(),
+            'conceptos' => self::CONCEPTOS,
+        ]);
+    }
+
+    /** Actualiza una tarifa (queda auditada en laravel-auditing). */
+    public function actualizarTarifa(Request $request, Tarifa $tarifa): RedirectResponse
+    {
+        $tarifa->update($this->validarTarifa($request));
+
+        return redirect('/admin/tarifas')->with('exito', 'Tarifa actualizada correctamente.');
+    }
+
+    /** @return array<string, mixed> */
+    private function validarTarifa(Request $request): array
+    {
+        return $request->validate([
             'servicio_id' => ['required', 'integer', 'exists:servicios,id'],
             'concepto' => ['required', 'string', Rule::in(self::CONCEPTOS)],
             'monto' => ['required', 'numeric', 'min:0'],
@@ -78,9 +103,5 @@ class CatalogoAdminController extends Controller
             'vigente_hasta' => ['nullable', 'date', 'after:vigente_desde'],
             'resolucion' => ['nullable', 'string', 'max:255'],
         ]);
-
-        Tarifa::create($datos);
-
-        return redirect('/admin/tarifas')->with('exito', 'Tarifa registrada correctamente.');
     }
 }

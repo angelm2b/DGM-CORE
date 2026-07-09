@@ -161,14 +161,22 @@ php artisan solicitudes:caducar
 ```
 POST   /personas                         GET /personas?documento=&tipo=&nacionalidad=
 GET    /personas/{id}
-POST   /solicitudes                      GET /solicitudes/{id}
+GET    /personas/{id}/expedientes        GET /personas/{id}/documentos
+GET    /expedientes/{id}
+POST   /solicitudes                      GET /solicitudes?persona_id=&expediente_id=&estado=
+GET    /solicitudes/{id}                 GET /solicitudes/{id}/elegibilidad
 POST   /solicitudes/{id}/transicion
 POST   /solicitudes/{id}/adjuntos
+PUT    /solicitudes/{id}/adjuntos/{adjuntoId}/validar
+DELETE /solicitudes/{id}/adjuntos/{adjuntoId}
 GET    /ordenes-pago/{id}
 POST   /pagos                            (con Idempotency-Key)
+GET    /pagos/{id}
 POST   /movimientos                      GET /movimientos?persona_id=
 POST   /documentos/emitir                GET /documentos/{numero_serie}/verificar
+POST   /documentos/{id}/revocar          POST /documentos/{id}/reponer
 GET    /calculos/tasa-estadia?persona_id=&fecha_salida=
+GET    /calculos/penalidad?fecha_vencimiento=&fecha_calculo=
 GET    /catalogos/servicios|tarifas|categorias|puntos-control
 ```
 
@@ -176,6 +184,17 @@ GET    /catalogos/servicios|tarifas|categorias|puntos-control
   incluye en la respuesta.
 - `POST /pagos` concilia la orden de pago, genera el `numero_comprobante` y avanza la
   solicitud a `PAGADA`.
+- `PUT .../adjuntos/{id}/validar` marca un adjunto como validado (o retira la
+  validación); es la base de RN-08 (renovación exige PÓLIZA validada).
+- `POST /documentos/{id}/revocar` deja el documento `REVOCADO` (verifica como no
+  válido). `POST /documentos/{id}/reponer` marca el original `REPUESTO` y emite uno
+  nuevo con serie propia. Ambos exigen que el documento esté `VIGENTE`.
+- `GET /solicitudes/{id}/elegibilidad` evalúa las reglas aplicables al servicio de
+  la solicitud (RN-03/05/08/10 y el indicador RN-09) sin modificar nada; devuelve
+  `elegible` y el detalle por regla. Qué reglas aplican a qué servicios se
+  configura en `config/dgm.php` (`elegibilidad`).
+- `DELETE .../adjuntos/{id}` elimina un adjunto cargado por error; uno validado no
+  puede eliminarse sin antes retirar la validación.
 
 ## Ejemplos de llamadas
 

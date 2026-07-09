@@ -6,6 +6,7 @@ namespace Tests\Feature;
 
 use App\Models\Rol;
 use App\Models\Servicio;
+use App\Models\Tarifa;
 use App\Models\Usuario;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -148,5 +149,30 @@ class PanelAdminTest extends TestCase
             'concepto' => 'DEPOSITO_EXPEDIENTE',
             'resolucion' => 'RES-2026-001',
         ]);
+    }
+
+    public function test_admin_puede_editar_tarifa(): void
+    {
+        $tarifa = Tarifa::first();
+
+        $this->actingAs($this->admin, 'web')
+            ->get("/admin/tarifas/{$tarifa->id}/editar")
+            ->assertOk()
+            ->assertSee('Editar tarifa');
+
+        $this->actingAs($this->admin, 'web')
+            ->put("/admin/tarifas/{$tarifa->id}", [
+                'servicio_id' => $tarifa->servicio_id,
+                'concepto' => $tarifa->concepto,
+                'monto' => '9999.00',
+                'moneda' => $tarifa->moneda,
+                'vigente_desde' => $tarifa->vigente_desde->format('Y-m-d'),
+                'vigente_hasta' => $tarifa->vigente_hasta?->format('Y-m-d'),
+                'resolucion' => 'RES-CORREGIDA',
+            ])->assertRedirect('/admin/tarifas');
+
+        $tarifa->refresh();
+        $this->assertSame('9999.00', (string) $tarifa->monto);
+        $this->assertSame('RES-CORREGIDA', $tarifa->resolucion);
     }
 }
