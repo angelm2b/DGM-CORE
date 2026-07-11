@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AccesoAdminController;
 use App\Http\Controllers\Admin\AuditoriaAdminController;
 use App\Http\Controllers\Admin\CatalogoAdminController;
 use App\Http\Controllers\Admin\PanelAdminController;
+use App\Http\Controllers\Admin\SistemaAdminController;
 use App\Http\Controllers\Admin\SolicitudAdminController;
 use App\Http\Controllers\Admin\UsuarioAdminController;
 use App\Http\Controllers\DocsAccesoController;
@@ -44,6 +45,10 @@ Route::prefix('admin')->group(function () {
     Route::middleware(AccesoAdmin::class)->group(function () {
         Route::get('/', [PanelAdminController::class, 'index']);
 
+        // Sistema: apagador general de la API interna (/core/v1).
+        Route::get('/sistema', [SistemaAdminController::class, 'index']);
+        Route::post('/sistema/alternar-api', [SistemaAdminController::class, 'alternarApi']);
+
         // Usuarios internos
         Route::get('/usuarios', [UsuarioAdminController::class, 'index']);
         Route::get('/usuarios/crear', [UsuarioAdminController::class, 'crear']);
@@ -54,12 +59,15 @@ Route::prefix('admin')->group(function () {
 
         // Catálogos: servicios y tarifas
         Route::get('/servicios', [CatalogoAdminController::class, 'servicios']);
+        Route::get('/servicios/crear', [CatalogoAdminController::class, 'crearServicio']);
+        Route::post('/servicios', [CatalogoAdminController::class, 'guardarServicio']);
         Route::post('/servicios/{servicio}/alternar-activo', [CatalogoAdminController::class, 'alternarServicio']);
         Route::get('/tarifas', [CatalogoAdminController::class, 'tarifas']);
         Route::get('/tarifas/crear', [CatalogoAdminController::class, 'crearTarifa']);
         Route::post('/tarifas', [CatalogoAdminController::class, 'guardarTarifa']);
         Route::get('/tarifas/{tarifa}/editar', [CatalogoAdminController::class, 'editarTarifa']);
         Route::put('/tarifas/{tarifa}', [CatalogoAdminController::class, 'actualizarTarifa']);
+        Route::delete('/tarifas/{tarifa}', [CatalogoAdminController::class, 'eliminarTarifa']);
 
         // Solicitudes (solo lectura)
         Route::get('/solicitudes', [SolicitudAdminController::class, 'index']);

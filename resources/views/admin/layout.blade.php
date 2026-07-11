@@ -147,6 +147,7 @@
             <a href="/admin/tarifas" class="{{ request()->is('admin/tarifas*') ? 'activo' : '' }}">Tarifas</a>
             <a href="/admin/solicitudes" class="{{ request()->is('admin/solicitudes*') ? 'activo' : '' }}">Solicitudes</a>
             <a href="/admin/auditoria" class="{{ request()->is('admin/auditoria*') ? 'activo' : '' }}">Auditoría</a>
+            <a href="/admin/sistema" class="{{ request()->is('admin/sistema*') ? 'activo' : '' }}">Sistema</a>
         </nav>
         <div class="sesion">
             <strong>{{ auth()->user()?->nombre }}</strong>

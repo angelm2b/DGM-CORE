@@ -44,7 +44,17 @@
                         <td>{{ $tarifa->vigente_desde?->format('d/m/Y') }}</td>
                         <td>{{ $tarifa->vigente_hasta?->format('d/m/Y') ?? '—' }}</td>
                         <td>{{ $tarifa->resolucion ?? '—' }}</td>
-                        <td><a href="/admin/tarifas/{{ $tarifa->id }}/editar">Editar</a></td>
+                        <td>
+                            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                                <a href="/admin/tarifas/{{ $tarifa->id }}/editar">Editar</a>
+                                <form method="POST" action="/admin/tarifas/{{ $tarifa->id }}"
+                                      onsubmit="return confirm('¿Eliminar esta tarifa? Esta acción no se puede deshacer.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn chico peligro">Eliminar</button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                 @empty
                     <tr><td colspan="7" style="color: var(--muted);">No hay tarifas para el filtro seleccionado.</td></tr>

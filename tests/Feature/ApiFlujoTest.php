@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\Ajuste;
 use App\Models\Oficina;
 use App\Models\PuntoControl;
 use App\Models\Servicio;
@@ -168,6 +169,56 @@ class ApiFlujoTest extends TestCase
         $this->getJson('/core/v1/calculos/tasa-estadia?persona_id='.$persona['id'].'&fecha_salida=2026-02-20')
             ->assertOk()
             ->assertJsonPath('data.dias_sobreestadia', 20);
+    }
+
+    public function test_api_apagada_responde_503_a_todo(): void
+    {
+        // Con la API encendida (estado por defecto) el catálogo responde.
+        $this->getJson('/core/v1/catalogos/servicios')->assertOk();
+
+        Ajuste::alternarApi(); // apagar
+
+        // Apagada: 503 sin cuerpo aun con token y permisos válidos.
+        $this->getJson('/core/v1/catalogos/servicios')
+            ->assertStatus(503)
+            ->assertNoContent(503);
+        $this->postJson('/core/v1/personas', [])->assertStatus(503);
+
+        Ajuste::alternarApi(); // encender
+
+        // Encendida de nuevo: el mismo token funciona sin cambios.
+        $this->getJson('/core/v1/catalogos/servicios')->assertOk();
+    }
+
+    public function test_servicio_desactivado_rechaza_solicitudes_nuevas(): void
+    {
+        $persona = $this->postJson('/core/v1/personas', [
+            'tipo_documento' => 'PASAPORTE',
+            'numero_documento' => 'B7654321',
+            'nacionalidad' => 'USA',
+            'nombres' => 'John',
+            'apellidos' => 'Roe',
+            'fecha_nacimiento' => '1988-09-12',
+            'pasaporte_vence' => '2031-05-05',
+        ])->assertStatus(201)->json('data');
+
+        $srv = Servicio::where('codigo', 'SRV-001')->first();
+        $datos = [
+            'persona_id' => $persona['id'],
+            'servicio_id' => $srv->id,
+            'oficina_id' => $this->oficinaId,
+            'canal_origen' => 'WEB',
+        ];
+
+        // Desactivado: 422 problem+json estándar, igual que cualquier validación.
+        $srv->update(['activo' => false]);
+        $this->postJson('/core/v1/solicitudes', $datos)
+            ->assertStatus(422)
+            ->assertHeader('content-type', 'application/problem+json');
+
+        // Reactivado: la misma petición vuelve a funcionar sin ningún cambio.
+        $srv->update(['activo' => true]);
+        $this->postJson('/core/v1/solicitudes', $datos)->assertStatus(201);
     }
 
     public function test_adjunto_no_jpg_es_rechazado_rn11(): void

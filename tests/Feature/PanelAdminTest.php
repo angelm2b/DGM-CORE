@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\Ajuste;
 use App\Models\Rol;
 use App\Models\Servicio;
 use App\Models\Tarifa;
@@ -149,6 +150,71 @@ class PanelAdminTest extends TestCase
             'concepto' => 'DEPOSITO_EXPEDIENTE',
             'resolucion' => 'RES-2026-001',
         ]);
+    }
+
+    public function test_admin_puede_apagar_y_encender_la_api(): void
+    {
+        $this->actingAs($this->admin, 'web');
+
+        // La página de sistema muestra el interruptor encendido por defecto.
+        $this->get('/admin/sistema')->assertOk()->assertSee('Apagar API');
+
+        $this->post('/admin/sistema/alternar-api')->assertRedirect();
+        $this->assertFalse(Ajuste::apiEncendida());
+        $this->get('/admin/sistema')->assertOk()->assertSee('Encender API');
+
+        $this->post('/admin/sistema/alternar-api')->assertRedirect();
+        $this->assertTrue(Ajuste::apiEncendida());
+    }
+
+    public function test_admin_puede_crear_servicio(): void
+    {
+        $this->actingAs($this->admin, 'web')
+            ->get('/admin/servicios/crear')
+            ->assertOk()
+            ->assertSee('Nuevo servicio');
+
+        $this->actingAs($this->admin, 'web')
+            ->post('/admin/servicios', [
+                'codigo' => 'SRV-099',
+                'nombre' => 'Servicio de prueba',
+                'categoria_migratoria_id' => null,
+                'canal' => 'AMBOS',
+                'dias_sla' => 10,
+                'requiere_cita' => '1',
+            ])->assertRedirect('/admin/servicios');
+
+        $this->assertDatabaseHas('servicios', [
+            'codigo' => 'SRV-099',
+            'nombre' => 'Servicio de prueba',
+            'canal' => 'AMBOS',
+            'requiere_cita' => true,
+            'activo' => true,
+        ]);
+    }
+
+    public function test_no_se_puede_crear_servicio_con_codigo_repetido(): void
+    {
+        $existente = Servicio::first();
+
+        $this->actingAs($this->admin, 'web')
+            ->post('/admin/servicios', [
+                'codigo' => $existente->codigo,
+                'nombre' => 'Duplicado',
+                'canal' => 'WEB',
+                'dias_sla' => 5,
+            ])->assertSessionHasErrors('codigo');
+    }
+
+    public function test_admin_puede_eliminar_tarifa(): void
+    {
+        $tarifa = Tarifa::first();
+
+        $this->actingAs($this->admin, 'web')
+            ->delete("/admin/tarifas/{$tarifa->id}")
+            ->assertRedirect('/admin/tarifas');
+
+        $this->assertDatabaseMissing('tarifas', ['id' => $tarifa->id]);
     }
 
     public function test_admin_puede_editar_tarifa(): void

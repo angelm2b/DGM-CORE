@@ -3,7 +3,10 @@
 @section('titulo', 'Servicios')
 
 @section('contenido')
-    <h1>Servicios</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h1 style="margin: 0;">Servicios</h1>
+        <a class="btn" href="/admin/servicios/crear">Nuevo servicio</a>
+    </div>
 
     <div class="tarjeta">
         <table>

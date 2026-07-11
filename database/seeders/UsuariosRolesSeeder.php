@@ -108,8 +108,15 @@ class UsuariosRolesSeeder extends Seeder
         // Crea el token solo si aún no existe (idempotencia) y lo expone una vez.
         if ($integrador->tokens()->where('name', 'integrador')->doesntExist()) {
             $token = $integrador->createToken('integrador', ['*'])->plainTextToken;
-            $rutaToken = storage_path('integrador_token.txt');
-            file_put_contents($rutaToken, $token.PHP_EOL);
+
+            // En tests no se toca storage/: el token vive en la base de testing
+            // (que además se revierte) y sobrescribir el archivo dejaría un
+            // token inválido para el entorno real.
+            if (! app()->runningUnitTests()) {
+                $rutaToken = storage_path('integrador_token.txt');
+                file_put_contents($rutaToken, $token.PHP_EOL);
+            }
+
             $this->command?->warn('==================================================================');
             $this->command?->warn('TOKEN SANCTUM DEL INTEGRADOR (guardado en storage/integrador_token.txt):');
             $this->command?->warn($token);

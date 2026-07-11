@@ -4,6 +4,7 @@ use App\Exceptions\DominioException;
 use App\Http\Middleware\AsignarCorrelationId;
 use App\Http\Middleware\ForzarJson;
 use App\Http\Middleware\SinCacheNavegador;
+use App\Http\Middleware\VerificarApiEncendida;
 use App\Http\Middleware\VerificarPermiso;
 use App\Support\RespuestaProblema;
 use Illuminate\Auth\AuthenticationException;
@@ -26,7 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Toda la API interna fuerza JSON y propaga el X-Correlation-Id.
+        // El apagador general va primero: con la API apagada nada más se evalúa.
         $middleware->api(prepend: [
+            VerificarApiEncendida::class,
             AsignarCorrelationId::class,
             ForzarJson::class,
         ]);

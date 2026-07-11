@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CategoriaMigratoria;
 use App\Models\Servicio;
 use App\Models\Tarifa;
 use Illuminate\Http\RedirectResponse;
@@ -24,6 +25,9 @@ class CatalogoAdminController extends Controller
         'REENTRADA',
     ];
 
+    /** Canales por los que puede solicitarse un servicio (enum de la tabla servicios). */
+    private const CANALES = ['WEB', 'CAJA', 'AMBOS'];
+
     public function servicios()
     {
         return View::make('admin.servicios.index', [
@@ -32,6 +36,33 @@ class CatalogoAdminController extends Controller
                 ->orderBy('codigo')
                 ->paginate(25),
         ]);
+    }
+
+    public function crearServicio()
+    {
+        return View::make('admin.servicios.crear', [
+            'categorias' => CategoriaMigratoria::orderBy('codigo')->get(),
+            'canales' => self::CANALES,
+        ]);
+    }
+
+    public function guardarServicio(Request $request): RedirectResponse
+    {
+        $datos = $request->validate([
+            'codigo' => ['required', 'string', 'max:20', 'unique:servicios,codigo'],
+            'nombre' => ['required', 'string', 'max:255'],
+            'categoria_migratoria_id' => ['nullable', 'integer', 'exists:categorias_migratorias,id'],
+            'canal' => ['required', 'string', Rule::in(self::CANALES)],
+            'dias_sla' => ['required', 'integer', 'min:0', 'max:65535'],
+        ]);
+
+        $datos['requiere_cita'] = $request->boolean('requiere_cita');
+        $datos['activo'] = true;
+
+        $servicio = Servicio::create($datos);
+
+        return redirect('/admin/servicios')
+            ->with('exito', "Servicio {$servicio->codigo} creado correctamente. Recuerda registrar sus tarifas.");
     }
 
     /** Habilita o deshabilita un servicio del catálogo. */
@@ -89,6 +120,18 @@ class CatalogoAdminController extends Controller
         $tarifa->update($this->validarTarifa($request));
 
         return redirect('/admin/tarifas')->with('exito', 'Tarifa actualizada correctamente.');
+    }
+
+    /**
+     * Elimina una tarifa (queda auditada en laravel-auditing). Las órdenes de
+     * pago copian el monto al generarse, así que borrar una tarifa no afecta
+     * órdenes ya emitidas.
+     */
+    public function eliminarTarifa(Tarifa $tarifa): RedirectResponse
+    {
+        $tarifa->delete();
+
+        return redirect('/admin/tarifas')->with('exito', 'Tarifa eliminada correctamente.');
     }
 
     /** @return array<string, mixed> */
