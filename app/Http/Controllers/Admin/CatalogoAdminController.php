@@ -23,6 +23,8 @@ class CatalogoAdminController extends Controller
         'PENALIDAD_MES',
         'TASA_ESTADIA',
         'REENTRADA',
+        'PRORROGA',
+        'CERTIFICACION',
     ];
 
     /** Canales por los que puede solicitarse un servicio (enum de la tabla servicios). */

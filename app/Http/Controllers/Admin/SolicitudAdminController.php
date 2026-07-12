@@ -48,7 +48,7 @@ class SolicitudAdminController extends Controller
             'servicio', 'oficina', 'persona', 'expediente',
             'estados' => fn ($q) => $q->with('usuario')->latest(),
             'adjuntos', 'documentosEmitidos',
-            'ordenesPago' => fn ($q) => $q->latest('fecha_emision'),
+            'ordenesPago' => fn ($q) => $q->with('pagos')->latest('fecha_emision'),
         ]);
 
         return View::make('admin.solicitudes.detalle', ['solicitud' => $solicitud]);

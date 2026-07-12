@@ -145,7 +145,9 @@
             <a href="/admin/usuarios" class="{{ request()->is('admin/usuarios*') ? 'activo' : '' }}">Usuarios</a>
             <a href="/admin/servicios" class="{{ request()->is('admin/servicios*') ? 'activo' : '' }}">Servicios</a>
             <a href="/admin/tarifas" class="{{ request()->is('admin/tarifas*') ? 'activo' : '' }}">Tarifas</a>
+            <a href="/admin/personas" class="{{ request()->is('admin/personas*') ? 'activo' : '' }}">Personas</a>
             <a href="/admin/solicitudes" class="{{ request()->is('admin/solicitudes*') ? 'activo' : '' }}">Solicitudes</a>
+            <a href="/admin/movimientos" class="{{ request()->is('admin/movimientos*') ? 'activo' : '' }}">Movimientos</a>
             <a href="/admin/auditoria" class="{{ request()->is('admin/auditoria*') ? 'activo' : '' }}">Auditoría</a>
             <a href="/admin/sistema" class="{{ request()->is('admin/sistema*') ? 'activo' : '' }}">Sistema</a>
         </nav>

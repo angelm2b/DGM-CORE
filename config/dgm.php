@@ -33,6 +33,10 @@ return [
         'mayoria_edad' => 18,
     ],
 
+    // Servicio cuya orden de pago se calcula con la tabla de estadía (RN-02)
+    // en lugar de tarifas fijas (ver OrdenPagoService).
+    'servicio_tasa_estadia' => 'SRV-007',
+
     // Códigos de servicio a los que aplican reglas de elegibilidad específicas
     // (ver ElegibilidadService::evaluarSolicitud).
     'elegibilidad' => [

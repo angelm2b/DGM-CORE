@@ -39,4 +39,9 @@ class MovimientoMigratorio extends Model
     {
         return $this->belongsTo(PuntoControl::class, 'punto_control_id');
     }
+
+    public function oficial(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'oficial_id');
+    }
 }

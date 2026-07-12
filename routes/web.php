@@ -3,7 +3,9 @@
 use App\Http\Controllers\Admin\AccesoAdminController;
 use App\Http\Controllers\Admin\AuditoriaAdminController;
 use App\Http\Controllers\Admin\CatalogoAdminController;
+use App\Http\Controllers\Admin\MovimientoAdminController;
 use App\Http\Controllers\Admin\PanelAdminController;
+use App\Http\Controllers\Admin\PersonaAdminController;
 use App\Http\Controllers\Admin\SistemaAdminController;
 use App\Http\Controllers\Admin\SolicitudAdminController;
 use App\Http\Controllers\Admin\UsuarioAdminController;
@@ -72,6 +74,13 @@ Route::prefix('admin')->group(function () {
         // Solicitudes (solo lectura)
         Route::get('/solicitudes', [SolicitudAdminController::class, 'index']);
         Route::get('/solicitudes/{solicitud}', [SolicitudAdminController::class, 'detalle']);
+
+        // Personas y su historial (solo lectura)
+        Route::get('/personas', [PersonaAdminController::class, 'index']);
+        Route::get('/personas/{persona}', [PersonaAdminController::class, 'detalle']);
+
+        // Movimientos migratorios (solo lectura)
+        Route::get('/movimientos', [MovimientoAdminController::class, 'index']);
 
         // Auditoría (solo lectura)
         Route::get('/auditoria', [AuditoriaAdminController::class, 'index']);

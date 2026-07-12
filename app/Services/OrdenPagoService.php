@@ -17,9 +17,12 @@ use Illuminate\Support\Facades\DB;
 class OrdenPagoService
 {
     /** Conceptos de tarifa de monto fijo que se incluyen automáticamente. */
-    private const CONCEPTOS_FIJOS = ['DEPOSITO_EXPEDIENTE', 'CARNET', 'REENTRADA'];
+    private const CONCEPTOS_FIJOS = ['DEPOSITO_EXPEDIENTE', 'CARNET', 'REENTRADA', 'PRORROGA', 'CERTIFICACION'];
 
-    public function __construct(private readonly CalculadoraTarifaService $tarifas) {}
+    public function __construct(
+        private readonly CalculadoraTarifaService $tarifas,
+        private readonly CalculadoraEstadiaService $estadia,
+    ) {}
 
     /**
      * Crea (si no existe ya una pendiente) la orden de pago de la solicitud.
@@ -50,6 +53,25 @@ class OrdenPagoService
                 $monto = Dinero::normalizar($item['monto']);
                 $detalle[] = ['concepto' => $item['concepto'], 'monto' => $monto, 'resolucion' => $item['resolucion'] ?? null];
                 $total = Dinero::sumar($total, $monto);
+            }
+
+            // Tasa de estadía (RN-02): no es tarifa fija; se calcula por persona
+            // con la tabla escalonada según los días de sobreestadía a la fecha
+            // de emisión de la orden.
+            if ($solicitud->servicio?->codigo === config('dgm.servicio_tasa_estadia', 'SRV-007')) {
+                $persona = $solicitud->persona;
+                if ($persona) {
+                    $calculo = $this->estadia->calcularParaPersona($persona->id, Carbon::now());
+                    if (! Dinero::esCero($calculo['monto'])) {
+                        $detalle[] = [
+                            'concepto' => 'TASA_ESTADIA',
+                            'monto' => $calculo['monto'],
+                            'resolucion' => null,
+                            'dias_sobreestadia' => $calculo['dias'],
+                        ];
+                        $total = Dinero::sumar($total, $calculo['monto']);
+                    }
+                }
             }
 
             $vigenciaDias = (int) config('dgm.orden_pago_vigencia_dias', 15);

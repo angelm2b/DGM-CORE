@@ -32,12 +32,19 @@ class TarifasSeeder extends Seeder
             ['SRV-005', 'CARNET', '6000.00', 'RES-DGM-2024-005'],
             // SRV-008 Permiso de reentrada: 1ra prórroga RD$11,200.
             ['SRV-008', 'REENTRADA', '11200.00', 'RES-DGM-2024-008'],
+            // SRV-006 Prórroga de estadía de turista: tarifa plana equivalente
+            // al rango 31-90 días de la tabla de estadía 2024.
+            ['SRV-006', 'PRORROGA', '4000.00', 'RES-DGM-2024-006'],
+            // SRV-009 Certificación de salida de menores.
+            ['SRV-009', 'CERTIFICACION', '1000.00', 'RES-DGM-2024-009'],
             // SRV-011 Reposición de carnet.
             ['SRV-011', 'CARNET', '2500.00', 'RES-DGM-2024-011'],
             // SRV-012 NG-1 / PADEI / TT-1: 1 año renovable.
             ['SRV-012', 'DEPOSITO_EXPEDIENTE', '5000.00', 'RES-DGM-2024-012'],
             ['SRV-012', 'CARNET', '2500.00', 'RES-DGM-2024-012'],
-            // SRV-007 Tasa de estadía: se calcula con tabla_estadia (TablaEstadiaSeeder).
+            // SRV-007 Tasa de estadía: se calcula con tabla_estadia (TablaEstadiaSeeder)
+            // vía CalculadoraEstadiaService al emitir la orden de pago.
+            // SRV-010 E-Ticket: gratuito por diseño, no lleva tarifa.
         ];
 
         foreach ($tarifas as [$codigo, $concepto, $monto, $resolucion]) {

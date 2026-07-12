@@ -77,6 +77,28 @@
         </table>
     </div>
 
+    <h2>Pagos registrados</h2>
+    <div class="tarjeta">
+        <table>
+            <thead>
+                <tr><th>Fecha</th><th>Monto</th><th>Método</th><th>Referencia</th><th>Comprobante</th></tr>
+            </thead>
+            <tbody>
+                @forelse ($solicitud->ordenesPago->flatMap->pagos->sortByDesc('created_at') as $pago)
+                    <tr>
+                        <td>{{ $pago->created_at?->format('d/m/Y H:i') }}</td>
+                        <td>{{ number_format((float) $pago->monto, 2) }} {{ $pago->ordenPago?->moneda }}</td>
+                        <td>{{ $pago->metodo }}</td>
+                        <td>{{ $pago->referencia_externa ?? '—' }}</td>
+                        <td><code>{{ $pago->numero_comprobante }}</code></td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" style="color: var(--muted);">Sin pagos registrados.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
     <h2>Documentos emitidos</h2>
     <div class="tarjeta">
         <table>
